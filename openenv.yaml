@@ -1,0 +1,72 @@
+# openenv.yaml — Meta PyTorch OpenEnv Hackathon
+name: LegalReviewEnv
+version: "1.0.0"
+author: LegalReviewEnv Team
+license: MIT
+
+description: >
+  Sequential decision-making environment simulating an AI legal review agent.
+  The agent processes contract clauses and must classify each as safe or risky,
+  choosing from five actions: APPROVE, FLAG_CLAUSE, REDLINE, REQUEST_CLARIFY,
+  or ESCALATE_COUNSEL. Scored via F1/recall against ground-truth risk labels.
+
+environment:
+  entry_point: env:LegalReviewEnv
+  obs_dim: 24
+  action_space: Discrete(5)
+  actions:
+    0: APPROVE
+    1: FLAG_CLAUSE
+    2: REDLINE
+    3: REQUEST_CLARIFY
+    4: ESCALATE_COUNSEL
+
+tasks:
+  easy:
+    description: "10-clause NDA. Binary risk. No time pressure. Seed 1001."
+    n_clauses: 10
+    contract_type: NDA
+    time_budget: null
+    seed: 1001
+    target_score: 0.70
+    metric: f1
+
+  medium:
+    description: "50-clause SaaS Agreement. Multi-jurisdiction. Budget 80. Seed 2002."
+    n_clauses: 50
+    contract_type: SaaS Agreement
+    time_budget: 80
+    seed: 2002
+    target_score: 0.60
+    metric: f1
+
+  hard:
+    description: "120-clause M&A Due Diligence. Nested refs. Budget 150. Seed 3003."
+    n_clauses: 120
+    contract_type: M&A Due Diligence
+    time_budget: 150
+    seed: 3003
+    target_score: 0.50
+    metric: f1
+
+scoring:
+  method: weighted_f1_efficiency
+  task_weights: {easy: 0.20, medium: 0.35, hard: 0.45}
+  component_weights: {f1: 0.60, recall: 0.25, efficiency: 0.15}
+  passing_threshold: 0.40
+
+inference:
+  entry_point: inference.py
+  env_vars:
+    required: [API_BASE_URL, MODEL_NAME]
+    optional: [HF_TOKEN, LOCAL_IMAGE_NAME]
+
+dependencies:
+  python: ">=3.9"
+  packages:
+    - gymnasium>=0.29.0
+    - numpy>=1.24.0
+    - faker>=18.0.0
+    - openai>=1.0.0
+    - streamlit>=1.32.0
+    - pyyaml>=6.0
